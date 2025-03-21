@@ -1,9 +1,10 @@
 package com.oneassist.ccf.contract;
 
-public class ProductCategoryDTO {
+public class CategoryServiceDTO {
 
     private Long id;
     private String categoryName;
+    private String serviceName;
     private Object configuration;
 
     public Long getId() {
@@ -30,6 +31,14 @@ public class ProductCategoryDTO {
         this.configuration = configuration;
     }
 
-    public ProductCategoryDTO() {
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
+
+    public CategoryServiceDTO() {
     }
 }

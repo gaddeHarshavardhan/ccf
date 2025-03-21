@@ -46,7 +46,7 @@ public class ConfigService {
     }
 
     public List<CategoryServiceConfigEntity> getAllConfigs() {
-        return repository.findAll();
+        return repository.findLatestVersionsForEachCategoryAndService();
     }
 
     public Optional<CategoryServiceConfigEntity> getConfigByCategoryAndServiceAndVersion(String categoryName, String serviceName, int version) {

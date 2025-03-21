@@ -53,7 +53,7 @@ public class ServiceRequestService {
             // Set basic service request properties
             serviceRequest.setClaimType(requestDTO.getClaimType());
             serviceRequest.setStatus("In Progress");  // Initial status for new requests
-            serviceRequest.setCurrentStage("Document Upload");  // Initial stage
+            serviceRequest.setCurrentStage("Verification");  // Initial stage
             serviceRequest.setCategory(requestDTO.getCategory());
             serviceRequest.setService(requestDTO.getService());
             serviceRequest.setCustomerName(requestDTO.getCustomerName());

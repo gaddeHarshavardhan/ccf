@@ -3,7 +3,7 @@ package com.oneassist.ccf.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oneassist.ccf.contract.ConfigRequest;
 import com.oneassist.ccf.service.ConfigService;
-import com.oneassist.ccf.contract.ProductCategoryDTO;
+import com.oneassist.ccf.contract.CategoryServiceDTO;
 import com.oneassist.ccf.entity.CategoryServiceConfigEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,9 +38,11 @@ public class ConfigController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CategoryServiceConfigEntity>> getAllConfigs() {
+    public ResponseEntity<List<CategoryServiceDTO>> getAllConfigs() {
         List<CategoryServiceConfigEntity> configs = configService.getAllConfigs();
-        return new ResponseEntity<>(configs, HttpStatus.OK);
+        List<CategoryServiceDTO> categoryServiceDTOS = new ArrayList<>();
+        configs.forEach(config -> categoryServiceDTOS.add(mapToDto(config)));
+        return new ResponseEntity<>(categoryServiceDTOS, HttpStatus.OK);
     }
 
     @GetMapping("/{categoryName}/{serviceName}/{version}")
@@ -56,10 +59,11 @@ public class ConfigController {
         }
     }
 
-    public ProductCategoryDTO mapToDto(CategoryServiceConfigEntity entity) {
-        ProductCategoryDTO dto = new ProductCategoryDTO();
+    public CategoryServiceDTO mapToDto(CategoryServiceConfigEntity entity) {
+        CategoryServiceDTO dto = new CategoryServiceDTO();
         dto.setId(entity.getId());
         dto.setCategoryName(entity.getCategoryName());
+        dto.setServiceName(entity.getServiceName());
 
         // Parse the string JSON into an Object
         try {
