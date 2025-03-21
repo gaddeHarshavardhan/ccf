@@ -1,4 +1,4 @@
-package com.oneassist.ccf;
+package com.oneassist.ccf.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

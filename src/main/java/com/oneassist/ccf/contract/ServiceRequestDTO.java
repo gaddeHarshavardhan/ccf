@@ -1,64 +1,22 @@
-package com.oneassist.ccf;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
+package com.oneassist.ccf.contract;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "service_requests")
-public class ServiceRequestEntity {
+public class ServiceRequestDTO {
 
-    @Id
-    @Column(name = "sr_id")
     private String srId;
-
-    @Column(name = "claim_type", nullable = false)
     private String claimType;
-
-    @Column(name = "category", nullable = false)
-    private String category;
-
-    @Column(name = "status", nullable = false)
     private String status;
-
-    @Column(name = "current_stage")
     private String currentStage;
-
-    @Column(name = "customer_name")
+    private String category;
+    private String service;
+    private Integer configVersion;
     private String customerName;
-
-    @Column(name = "device_make")
     private String deviceMake;
-
-    @Column(name = "contact")
     private String contact;
-
-    @Column(name = "created_date", nullable = false, updatable = false)
     private LocalDateTime createdDate;
-
-    @Column(name = "last_updated", nullable = false)
     private LocalDateTime lastUpdated;
-
-    @Column(name = "stage_data", columnDefinition = "json")
-    private String stageData;
-
-    // Pre-persist hook to set timestamps
-    @PrePersist
-    public void prePersist() {
-        this.createdDate = LocalDateTime.now();
-        this.lastUpdated = LocalDateTime.now();
-    }
-
-    // Pre-update hook to update the lastUpdated timestamp
-    @PreUpdate
-    public void preUpdate() {
-        this.lastUpdated = LocalDateTime.now();
-    }
+    private Object stageData;
 
     public String getSrId() {
         return srId;
@@ -108,11 +66,11 @@ public class ServiceRequestEntity {
         this.lastUpdated = lastUpdated;
     }
 
-    public String getStageData() {
+    public Object getStageData() {
         return stageData;
     }
 
-    public void setStageData(String stageData) {
+    public void setStageData(Object stageData) {
         this.stageData = stageData;
     }
 
@@ -148,6 +106,22 @@ public class ServiceRequestEntity {
         this.contact = contact;
     }
 
-    public ServiceRequestEntity() {
+    public String getService() {
+        return service;
+    }
+
+    public void setService(String service) {
+        this.service = service;
+    }
+
+    public Integer getConfigVersion() {
+        return configVersion;
+    }
+
+    public void setConfigVersion(Integer configVersion) {
+        this.configVersion = configVersion;
+    }
+
+    public ServiceRequestDTO() {
     }
 }

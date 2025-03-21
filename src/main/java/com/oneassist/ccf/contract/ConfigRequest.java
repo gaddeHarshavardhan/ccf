@@ -1,18 +1,27 @@
-package com.oneassist.ccf;
+package com.oneassist.ccf.contract;
 
 
 import java.util.List;
 
 public class ConfigRequest {
-    private String categoryName;
+    private String category;
+    private String service;
     private List<Stage> stages;
 
-    public String getCategoryName() {
-        return categoryName;
+    public String getCategory() {
+        return category;
     }
 
-    public void setCategoryName(String categoryName) {
-        this.categoryName = categoryName;
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getService() {
+        return service;
+    }
+
+    public void setService(String service) {
+        this.service = service;
     }
 
     public List<Stage> getStages() {
@@ -67,6 +76,7 @@ public class ConfigRequest {
         private String type;
         private boolean mandatory;
         private String validation;
+        private List<String> options;
 
         public String getName() {
             return name;
@@ -98,6 +108,14 @@ public class ConfigRequest {
 
         public void setValidation(String validation) {
             this.validation = validation;
+        }
+
+        public List<String> getOptions() {
+            return options;
+        }
+
+        public void setOptions(List<String> options) {
+            this.options = options;
         }
     }
 

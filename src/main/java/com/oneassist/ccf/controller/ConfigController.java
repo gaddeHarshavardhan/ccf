@@ -1,6 +1,10 @@
-package com.oneassist.ccf;
+package com.oneassist.ccf.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.oneassist.ccf.contract.ConfigRequest;
+import com.oneassist.ccf.service.ConfigService;
+import com.oneassist.ccf.contract.ProductCategoryDTO;
+import com.oneassist.ccf.entity.CategoryServiceConfigEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +28,7 @@ public class ConfigController {
     @PostMapping
     public ResponseEntity<?> saveConfig(@RequestBody ConfigRequest request) {
         try {
-            ProductCategoryEntity savedConfig = configService.saveConfig(request);
+            CategoryServiceConfigEntity savedConfig = configService.saveConfig(request);
             return new ResponseEntity<>(savedConfig, HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>("Error saving configuration: " + e.getMessage(),
@@ -33,14 +37,16 @@ public class ConfigController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProductCategoryEntity>> getAllConfigs() {
-        List<ProductCategoryEntity> configs = configService.getAllConfigs();
+    public ResponseEntity<List<CategoryServiceConfigEntity>> getAllConfigs() {
+        List<CategoryServiceConfigEntity> configs = configService.getAllConfigs();
         return new ResponseEntity<>(configs, HttpStatus.OK);
     }
 
-    @GetMapping("/{categoryName}")
-    public ResponseEntity<?> getConfigByCategory(@PathVariable String categoryName) {
-        Optional<ProductCategoryEntity> config = configService.getConfigByCategory(categoryName);
+    @GetMapping("/{categoryName}/{serviceName}/{version}")
+    public ResponseEntity<?> getConfigByCategory(@PathVariable("categoryName") String categoryName,
+                                                 @PathVariable("serviceName") String serviceName,
+                                                 @PathVariable("version") int version) {
+        Optional<CategoryServiceConfigEntity> config = configService.getConfigByCategoryAndServiceAndVersion(categoryName, serviceName, version);
         if (config.isPresent()) {
 
             return new ResponseEntity<>(mapToDto(config.get()), HttpStatus.OK);
@@ -50,7 +56,7 @@ public class ConfigController {
         }
     }
 
-    public ProductCategoryDTO mapToDto(ProductCategoryEntity entity) {
+    public ProductCategoryDTO mapToDto(CategoryServiceConfigEntity entity) {
         ProductCategoryDTO dto = new ProductCategoryDTO();
         dto.setId(entity.getId());
         dto.setCategoryName(entity.getCategoryName());

@@ -1,4 +1,4 @@
-package com.oneassist.ccf;
+package com.oneassist.ccf.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -8,17 +8,23 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "product_category_configs")
-public class ProductCategoryEntity {
+@Table(name = "category_service_config")
+public class CategoryServiceConfigEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String categoryName;
+
+    @Column(nullable = false)
+    private String serviceName;
 
     @Column(columnDefinition = "TEXT")
     private String configuration;
+
+    @Column(name = "version")
+    private int version;
 
     public Long getId() {
         return id;
@@ -44,6 +50,22 @@ public class ProductCategoryEntity {
         this.configuration = configuration;
     }
 
-    public ProductCategoryEntity() {
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    public CategoryServiceConfigEntity() {
     }
 }

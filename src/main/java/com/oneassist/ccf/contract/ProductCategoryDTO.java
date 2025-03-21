@@ -1,4 +1,4 @@
-package com.oneassist.ccf;
+package com.oneassist.ccf.contract;
 
 public class ProductCategoryDTO {
 
