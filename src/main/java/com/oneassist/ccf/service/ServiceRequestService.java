@@ -49,20 +49,20 @@ public class ServiceRequestService {
 
             // Generate a unique SR ID if not provided
             if (requestDTO.getSrId() == null || requestDTO.getSrId().isEmpty()) {
-                String uuid = UUID.randomUUID().toString().substring(0, 8);
+                final String uuid = UUID.randomUUID().toString().substring(0, 8);
                 serviceRequest.setSrId("sr_" + uuid);
             } else {
                 serviceRequest.setSrId(requestDTO.getSrId());
             }
 
             // Fetch the latest configuration for the given category and service
-            Optional<CategoryServiceConfigEntity> optional = productCategoryRepository.findFirstByCategoryNameAndServiceNameOrderByVersionDesc(
+            final Optional<CategoryServiceConfigEntity> optional = productCategoryRepository.findFirstByCategoryNameAndServiceNameOrderByVersionDesc(
                     requestDTO.getCategory(), requestDTO.getService());
             if (optional.isEmpty()) {
                 throw new RuntimeException("No configuration found for category: " + requestDTO.getCategory() + ", service: " + requestDTO.getService());
             }
 
-            List<ConfigRequest.Stage> stages = objectMapper.readValue(optional.get().getConfiguration(), new TypeReference<>() {
+            final List<ConfigRequest.Stage> stages = objectMapper.readValue(optional.get().getConfiguration(), new TypeReference<>() {
             });
 
             // Set basic service request properties
@@ -78,19 +78,19 @@ public class ServiceRequestService {
             serviceRequest.setCreatedDate(LocalDateTime.now());
             serviceRequest.setLastUpdated(LocalDateTime.now());
 
-            Category category = Category.valueOf(requestDTO.getCategory());
-            ServiceEnum service = ServiceEnum.valueOf(requestDTO.getService());
+            final Category category = Category.valueOf(requestDTO.getCategory());
+            final ServiceEnum service = ServiceEnum.valueOf(requestDTO.getService());
 
             serviceRequest.setClaimType(category.getDisplayName() + " " + service.getDisplayName());
 
             // Convert stageData to JSON string
             if (requestDTO.getStageData() != null) {
-                String stageDataJson = objectMapper.writeValueAsString(requestDTO.getStageData());
+                final String stageDataJson = objectMapper.writeValueAsString(requestDTO.getStageData());
                 serviceRequest.setStageData(stageDataJson);
             }
 
             // Save the service request
-            ServiceRequestEntity savedRequest = serviceRequestRepository.save(serviceRequest);
+            final ServiceRequestEntity savedRequest = serviceRequestRepository.save(serviceRequest);
 
             // Create and return DTO with the generated SR ID
             return mapToDTO(savedRequest);
@@ -106,7 +106,7 @@ public class ServiceRequestService {
      */
     @Transactional(readOnly = true)
     public ServiceRequestDTO findServiceRequestById(String srId) {
-        ServiceRequestEntity serviceRequest = serviceRequestRepository.findBySrId(srId)
+        final ServiceRequestEntity serviceRequest = serviceRequestRepository.findBySrId(srId)
                 .orElseThrow(() -> new RuntimeException("Service request not found with ID: " + srId));
 
         return mapToDTO(serviceRequest);
@@ -118,7 +118,7 @@ public class ServiceRequestService {
     @Transactional
     public ServiceRequestDTO updateServiceRequest(String srId, ServiceRequestDTO requestDTO) {
         try {
-            ServiceRequestEntity serviceRequest = serviceRequestRepository.findBySrId(srId)
+            final ServiceRequestEntity serviceRequest = serviceRequestRepository.findBySrId(srId)
                     .orElseThrow(() -> new RuntimeException("Service request not found with ID: " + srId));
 
             // Update the fields that can be modified
@@ -135,7 +135,7 @@ public class ServiceRequestService {
             serviceRequest.setLastUpdated(LocalDateTime.now());
 
             // Save the updated service request
-            ServiceRequestEntity updatedRequest = serviceRequestRepository.save(serviceRequest);
+            final ServiceRequestEntity updatedRequest = serviceRequestRepository.save(serviceRequest);
 
             return mapToDTO(updatedRequest);
 
@@ -149,15 +149,15 @@ public class ServiceRequestService {
     public ServiceRequestDTO submitServiceRequest(String srId, ServiceRequestDTO requestDTO) {
         log.info("Submitting service request with ID: {}", srId);
         try {
-            ServiceRequestEntity serviceRequest = serviceRequestRepository.findBySrId(srId)
+            final ServiceRequestEntity serviceRequest = serviceRequestRepository.findBySrId(srId)
                     .orElseThrow(() -> new RuntimeException("Service request not found with ID: " + srId));
 
-            ConfigRequest.Stage currentStage = getStage(serviceRequest);
+            final ConfigRequest.Stage currentStage = getStage(serviceRequest);
             if (currentStage == null) {
                 throw new RuntimeException("No next stage found for current stage: " + serviceRequest.getCurrentStage());
             }
 
-            String nextStage = determineNextStage(requestDTO, currentStage);
+            final String nextStage = determineNextStage(requestDTO, currentStage);
             if (nextStage == null || nextStage.isEmpty()) {
                 serviceRequest.setStatus(ServiceStatus.COMPLETED.getStatus());
             } else {
@@ -166,14 +166,14 @@ public class ServiceRequestService {
 
             // Update stage data if provided
             if (requestDTO.getStageData() != null) {
-                String stageDataJson = objectMapper.writeValueAsString(requestDTO.getStageData());
+                final String stageDataJson = objectMapper.writeValueAsString(requestDTO.getStageData());
                 serviceRequest.setStageData(stageDataJson);
             }
 
             serviceRequest.setLastUpdated(LocalDateTime.now());
 
             // Save the updated service request
-            ServiceRequestEntity updatedRequest = serviceRequestRepository.save(serviceRequest);
+            final ServiceRequestEntity updatedRequest = serviceRequestRepository.save(serviceRequest);
 
             return mapToDTO(updatedRequest);
 
@@ -185,14 +185,14 @@ public class ServiceRequestService {
 
     public String determineNextStage(ServiceRequestDTO serviceRequest, ConfigRequest.Stage stageConfig) {
         // Extract the current stage name and its data
-        String currentStageName = serviceRequest.getCurrentStage();
-        Map<String, Object> currentStageData = getStageData(serviceRequest, currentStageName);
+        final String currentStageName = serviceRequest.getCurrentStage();
+        final Map<String, Object> currentStageData = getStageData(serviceRequest, currentStageName);
 
         if (currentStageData == null || stageConfig == null) {
             return null;
         }
 
-        ConfigRequest.Action submitAction = stageConfig.getActions().stream()
+        final ConfigRequest.Action submitAction = stageConfig.getActions().stream()
                 .filter(action -> action.getOption().equalsIgnoreCase(Option.SUBMIT.getValue()))
                 .findAny().orElse(null);
 
@@ -281,11 +281,11 @@ public class ServiceRequestService {
 
     public ConfigRequest.Stage getStage(ServiceRequestEntity serviceRequest) throws JsonProcessingException {
 
-        CategoryServiceConfigEntity categoryServiceConfigEntity = productCategoryRepository.findByCategoryNameAndServiceNameAndVersion(
+        final CategoryServiceConfigEntity categoryServiceConfigEntity = productCategoryRepository.findByCategoryNameAndServiceNameAndVersion(
                         serviceRequest.getCategory(), serviceRequest.getService(), serviceRequest.getConfigVersion())
                 .orElseThrow(() -> new RuntimeException("Product category not found with name: PE"));
 
-        List<ConfigRequest.Stage> stages = objectMapper.readValue(categoryServiceConfigEntity.getConfiguration(), new TypeReference<List<ConfigRequest.Stage>>() {
+        final List<ConfigRequest.Stage> stages = objectMapper.readValue(categoryServiceConfigEntity.getConfiguration(), new TypeReference<List<ConfigRequest.Stage>>() {
         });
 
 
@@ -302,7 +302,7 @@ public class ServiceRequestService {
      * Convert entity to DTO
      */
     private ServiceRequestDTO mapToDTO(ServiceRequestEntity serviceRequest) {
-        ServiceRequestDTO dto = new ServiceRequestDTO();
+        final ServiceRequestDTO dto = new ServiceRequestDTO();
         dto.setSrId(serviceRequest.getSrId());
         dto.setCreatedDate(serviceRequest.getCreatedDate());
         dto.setClaimType(serviceRequest.getClaimType());

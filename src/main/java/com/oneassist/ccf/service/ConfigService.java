@@ -13,11 +13,13 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Service class for managing product category configurations.
+ */
 @Service
 public class ConfigService {
 
     private static final Logger log = LoggerFactory.getLogger(ConfigService.class);
-
 
     @Autowired
     private ProductCategoryRepository repository;
@@ -25,18 +27,25 @@ public class ConfigService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    /**
+     * Save a new configuration for a product category and service.
+     *
+     * @param request The configuration request containing the category, service, and stages.
+     * @return The saved configuration entity.
+     * @throws JsonProcessingException If there is an error processing JSON data.
+     */
     public CategoryServiceConfigEntity saveConfig(ConfigRequest request) throws JsonProcessingException {
-        String categoryName = request.getCategory();
-        String serviceName = request.getService();
+        final String categoryName = request.getCategory();
+        final String serviceName = request.getService();
         log.info("Saving configuration for category: {}, service: {}", categoryName, serviceName);
 
-        String configJson = objectMapper.writeValueAsString(request.getStages());
+        final String configJson = objectMapper.writeValueAsString(request.getStages());
 
-        Optional<CategoryServiceConfigEntity> existingConfig = repository.findFirstByCategoryNameAndServiceNameOrderByVersionDesc(categoryName, serviceName);
+        final Optional<CategoryServiceConfigEntity> existingConfig = repository.findFirstByCategoryNameAndServiceNameOrderByVersionDesc(categoryName, serviceName);
 
-        int version = existingConfig.isPresent() ? existingConfig.get().getVersion() + 1 : 1;
+        final int version = existingConfig.isPresent() ? existingConfig.get().getVersion() + 1 : 1;
 
-        CategoryServiceConfigEntity config = new CategoryServiceConfigEntity();
+        final CategoryServiceConfigEntity config = new CategoryServiceConfigEntity();
         config.setCategoryName(categoryName);
         config.setServiceName(serviceName);
         config.setConfiguration(configJson);
@@ -45,10 +54,23 @@ public class ConfigService {
         return repository.save(config);
     }
 
+    /**
+     * Get all the latest versions of configurations for each product category and service.
+     *
+     * @return A list of configuration entities.
+     */
     public List<CategoryServiceConfigEntity> getAllConfigs() {
         return repository.findLatestVersionsForEachCategoryAndService();
     }
 
+    /**
+     * Get a specific configuration for a product category and service by version.
+     *
+     * @param categoryName The name of the product category.
+     * @param serviceName The name of the service.
+     * @param version The version of the configuration.
+     * @return An optional containing the configuration entity if found, otherwise an empty optional.
+     */
     public Optional<CategoryServiceConfigEntity> getConfigByCategoryAndServiceAndVersion(String categoryName, String serviceName, int version) {
         return repository.findByCategoryNameAndServiceNameAndVersion(categoryName, serviceName, version);
     }

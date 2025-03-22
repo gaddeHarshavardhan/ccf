@@ -29,7 +29,7 @@ public class ServiceRequestController {
 
         log.info("Creating new service request for claim type: {}", requestDTO.getClaimType());
 
-        ServiceRequestDTO createdRequest = serviceRequestService.createServiceRequest(requestDTO);
+        final ServiceRequestDTO createdRequest = serviceRequestService.createServiceRequest(requestDTO);
 
         log.info("Service request created successfully with ID: {}", createdRequest.getSrId());
 
@@ -37,24 +37,21 @@ public class ServiceRequestController {
     }
 
     @GetMapping("/{srId}")
-    public ResponseEntity<ServiceRequestDTO> getServiceRequestById(
-            @PathVariable String srId) {
+    public ResponseEntity<ServiceRequestDTO> getServiceRequestById(@PathVariable String srId) {
 
         log.info("Fetching service request with ID: {}", srId);
 
-        ServiceRequestDTO requestDTO = serviceRequestService.findServiceRequestById(srId);
-
+        final ServiceRequestDTO requestDTO = serviceRequestService.findServiceRequestById(srId);
         return ResponseEntity.ok(requestDTO);
     }
 
     @PostMapping("/{srId}")
-    public ResponseEntity<ServiceRequestDTO> updateServiceRequest(
-            @PathVariable String srId,
-            @RequestBody ServiceRequestDTO requestDTO) {
+    public ResponseEntity<ServiceRequestDTO> updateServiceRequest(@PathVariable String srId,
+                                                                  @RequestBody ServiceRequestDTO requestDTO) {
 
         log.info("Updating service request with ID: {}", srId);
 
-        ServiceRequestDTO updatedRequest = serviceRequestService.updateServiceRequest(srId, requestDTO);
+        final ServiceRequestDTO updatedRequest = serviceRequestService.updateServiceRequest(srId, requestDTO);
 
         log.info("Service request updated successfully: {}", srId);
 
@@ -62,13 +59,12 @@ public class ServiceRequestController {
     }
 
     @PostMapping("/{srId}/submit")
-    public ResponseEntity<ServiceRequestDTO> submitServiceRequest(
-            @PathVariable String srId,
-            @RequestBody ServiceRequestDTO requestDTO) {
+    public ResponseEntity<ServiceRequestDTO> submitServiceRequest(@PathVariable String srId,
+                                                                  @RequestBody ServiceRequestDTO requestDTO) {
 
         log.info("Updating service request with ID: {}", srId);
 
-        ServiceRequestDTO updatedRequest = serviceRequestService.submitServiceRequest(srId, requestDTO);
+        final ServiceRequestDTO updatedRequest = serviceRequestService.submitServiceRequest(srId, requestDTO);
 
         log.info("Service request updated successfully: {}", srId);
 

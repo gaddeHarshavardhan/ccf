@@ -29,19 +29,21 @@ public class ConfigController {
     @PostMapping
     public ResponseEntity<?> saveConfig(@RequestBody ConfigRequest request) {
         try {
-            CategoryServiceConfigEntity savedConfig = configService.saveConfig(request);
+            final CategoryServiceConfigEntity savedConfig = configService.saveConfig(request);
             return new ResponseEntity<>(savedConfig, HttpStatus.CREATED);
         } catch (Exception e) {
-            return new ResponseEntity<>("Error saving configuration: " + e.getMessage(),
-                    HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("Error saving configuration: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @GetMapping
     public ResponseEntity<List<CategoryServiceDTO>> getAllConfigs() {
-        List<CategoryServiceConfigEntity> configs = configService.getAllConfigs();
-        List<CategoryServiceDTO> categoryServiceDTOS = new ArrayList<>();
+        // Get configs from the database and map them to DTOs
+        final List<CategoryServiceConfigEntity> configs = configService.getAllConfigs();
+
+        final List<CategoryServiceDTO> categoryServiceDTOS = new ArrayList<>();
         configs.forEach(config -> categoryServiceDTOS.add(mapToDto(config)));
+
         return new ResponseEntity<>(categoryServiceDTOS, HttpStatus.OK);
     }
 
@@ -49,18 +51,17 @@ public class ConfigController {
     public ResponseEntity<?> getConfigByCategory(@PathVariable("categoryName") String categoryName,
                                                  @PathVariable("serviceName") String serviceName,
                                                  @PathVariable("version") int version) {
-        Optional<CategoryServiceConfigEntity> config = configService.getConfigByCategoryAndServiceAndVersion(categoryName, serviceName, version);
+        // Get config from the database for category, service, and version
+        final Optional<CategoryServiceConfigEntity> config = configService.getConfigByCategoryAndServiceAndVersion(categoryName, serviceName, version);
         if (config.isPresent()) {
-
             return new ResponseEntity<>(mapToDto(config.get()), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>("Configuration not found for category: " + categoryName,
-                    HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("Configuration not found for category: " + categoryName, HttpStatus.NOT_FOUND);
         }
     }
 
     public CategoryServiceDTO mapToDto(CategoryServiceConfigEntity entity) {
-        CategoryServiceDTO dto = new CategoryServiceDTO();
+        final CategoryServiceDTO dto = new CategoryServiceDTO();
         dto.setId(entity.getId());
         dto.setCategoryName(entity.getCategoryName());
         dto.setServiceName(entity.getServiceName());
