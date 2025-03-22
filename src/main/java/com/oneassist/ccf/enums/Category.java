@@ -3,8 +3,8 @@ package com.oneassist.ccf.enums;
 public enum Category {
     PE("Personal Electronics"),
     HA("Home Appliances"),
-    MOTOR("Motor"),
-    FURNITURE("Furniture");
+    Motor("Motor"),
+    Furniture("Furniture");
 
     private final String displayName;
 
