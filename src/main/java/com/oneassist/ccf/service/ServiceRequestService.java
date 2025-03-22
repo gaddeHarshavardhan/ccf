@@ -3,6 +3,10 @@ package com.oneassist.ccf.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.oneassist.ccf.enums.Category;
+import com.oneassist.ccf.enums.Option;
+import com.oneassist.ccf.enums.ServiceEnum;
+import com.oneassist.ccf.enums.ServiceStatus;
 import com.oneassist.ccf.contract.ConfigRequest;
 import com.oneassist.ccf.contract.ServiceRequestDTO;
 import com.oneassist.ccf.entity.CategoryServiceConfigEntity;
@@ -63,7 +67,7 @@ public class ServiceRequestService {
 
             // Set basic service request properties
             serviceRequest.setClaimType(requestDTO.getClaimType());
-            serviceRequest.setStatus("In Progress");  // Initial status for new requests
+            serviceRequest.setStatus(ServiceStatus.IN_PROGRESS.getStatus());
             serviceRequest.setCurrentStage(stages.get(0).getStageName());
             serviceRequest.setConfigVersion(optional.get().getVersion());
             serviceRequest.setCategory(requestDTO.getCategory());
@@ -73,6 +77,11 @@ public class ServiceRequestService {
             serviceRequest.setDeviceMake(requestDTO.getDeviceMake());
             serviceRequest.setCreatedDate(LocalDateTime.now());
             serviceRequest.setLastUpdated(LocalDateTime.now());
+
+            Category category = Category.valueOf(requestDTO.getCategory());
+            ServiceEnum service = ServiceEnum.valueOf(requestDTO.getService());
+
+            serviceRequest.setClaimType(category.getDisplayName() + " " + service.getDisplayName());
 
             // Convert stageData to JSON string
             if (requestDTO.getStageData() != null) {
@@ -150,7 +159,7 @@ public class ServiceRequestService {
 
             String nextStage = determineNextStage(requestDTO, currentStage);
             if (nextStage == null || nextStage.isEmpty()) {
-                serviceRequest.setStatus("Completed");
+                serviceRequest.setStatus(ServiceStatus.COMPLETED.getStatus());
             } else {
                 serviceRequest.setCurrentStage(nextStage);
             }
@@ -184,7 +193,7 @@ public class ServiceRequestService {
         }
 
         ConfigRequest.Action submitAction = stageConfig.getActions().stream()
-                .filter(action -> action.getOption().equalsIgnoreCase("submit"))
+                .filter(action -> action.getOption().equalsIgnoreCase(Option.SUBMIT.getValue()))
                 .findAny().orElse(null);
 
         if (submitAction == null) {
