@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -45,15 +46,26 @@ public class ServiceRequestService {
             // Generate a unique SR ID if not provided
             if (requestDTO.getSrId() == null || requestDTO.getSrId().isEmpty()) {
                 String uuid = UUID.randomUUID().toString().substring(0, 8);
-                serviceRequest.setSrId("sr_"  + uuid);
+                serviceRequest.setSrId("sr_" + uuid);
             } else {
                 serviceRequest.setSrId(requestDTO.getSrId());
             }
 
+            // Fetch the latest configuration for the given category and service
+            Optional<CategoryServiceConfigEntity> optional = productCategoryRepository.findFirstByCategoryNameAndServiceNameOrderByVersionDesc(
+                    requestDTO.getCategory(), requestDTO.getService());
+            if (optional.isEmpty()) {
+                throw new RuntimeException("No configuration found for category: " + requestDTO.getCategory() + ", service: " + requestDTO.getService());
+            }
+
+            List<ConfigRequest.Stage> stages = objectMapper.readValue(optional.get().getConfiguration(), new TypeReference<>() {
+            });
+
             // Set basic service request properties
             serviceRequest.setClaimType(requestDTO.getClaimType());
             serviceRequest.setStatus("In Progress");  // Initial status for new requests
-            serviceRequest.setCurrentStage("Verification");  // Initial stage
+            serviceRequest.setCurrentStage(stages.get(0).getStageName());
+            serviceRequest.setConfigVersion(optional.get().getVersion());
             serviceRequest.setCategory(requestDTO.getCategory());
             serviceRequest.setService(requestDTO.getService());
             serviceRequest.setCustomerName(requestDTO.getCustomerName());
@@ -61,13 +73,6 @@ public class ServiceRequestService {
             serviceRequest.setDeviceMake(requestDTO.getDeviceMake());
             serviceRequest.setCreatedDate(LocalDateTime.now());
             serviceRequest.setLastUpdated(LocalDateTime.now());
-
-            Optional<CategoryServiceConfigEntity> optional = productCategoryRepository.findFirstByCategoryNameAndServiceNameOrderByVersionDesc(
-                    requestDTO.getCategory(), requestDTO.getService());
-            if (!optional.isPresent()) {
-                throw new RuntimeException("No configuration found for category: " + requestDTO.getCategory() + ", service: " + requestDTO.getService());
-            }
-            serviceRequest.setConfigVersion(optional.get().getVersion());
 
             // Convert stageData to JSON string
             if (requestDTO.getStageData() != null) {
@@ -139,12 +144,12 @@ public class ServiceRequestService {
                     .orElseThrow(() -> new RuntimeException("Service request not found with ID: " + srId));
 
             ConfigRequest.Stage currentStage = getStage(serviceRequest);
-            if (currentStage==null){
+            if (currentStage == null) {
                 throw new RuntimeException("No next stage found for current stage: " + serviceRequest.getCurrentStage());
             }
 
-            String nextStage = getNextStage(currentStage);
-            if (nextStage == null) {
+            String nextStage = determineNextStage(requestDTO, currentStage);
+            if (nextStage == null || nextStage.isEmpty()) {
                 serviceRequest.setStatus("Completed");
             } else {
                 serviceRequest.setCurrentStage(nextStage);
@@ -169,13 +174,110 @@ public class ServiceRequestService {
         }
     }
 
+    public String determineNextStage(ServiceRequestDTO serviceRequest, ConfigRequest.Stage stageConfig) {
+        // Extract the current stage name and its data
+        String currentStageName = serviceRequest.getCurrentStage();
+        Map<String, Object> currentStageData = getStageData(serviceRequest, currentStageName);
+
+        if (currentStageData == null || stageConfig == null) {
+            return null;
+        }
+
+        ConfigRequest.Action submitAction = stageConfig.getActions().stream()
+                .filter(action -> action.getOption().equalsIgnoreCase("submit"))
+                .findAny().orElse(null);
+
+        if (submitAction == null) {
+            throw new RuntimeException("No submit action found for current stage: " + currentStageName);
+        }
+
+        if (submitAction.getConditions() == null || submitAction.getConditions().isEmpty()) {
+            return submitAction.getStage();
+        }
+
+        // Check each action to find a valid transition
+        boolean allConditionsMet = true;
+
+        // Verify if all conditions for this action are met
+        for (ConfigRequest.Condition condition : submitAction.getConditions()) {
+            String fieldName = condition.getField();
+            String operator = condition.getOperator();
+            String expectedValue = condition.getValue();
+
+            // Get the actual value from the stage data
+            Object actualValue = currentStageData.get(fieldName);
+
+            // Check if the condition is met
+            if (!isConditionMet(actualValue, operator, expectedValue)) {
+                allConditionsMet = false;
+                break;
+            }
+        }
+
+        // If all conditions are met, this is our next stage
+        if (allConditionsMet) {
+            return submitAction.getStage();
+        }
+
+        // No valid transition found
+        return null;
+    }
+
+    private Map<String, Object> getStageData(ServiceRequestDTO serviceRequest, String stageName) {
+        if (serviceRequest.getStageData() instanceof Map) {
+            Map<String, Object> allStageData = (Map<String, Object>) serviceRequest.getStageData();
+            return (Map<String, Object>) allStageData.get(stageName);
+        }
+        return null;
+    }
+
+    private boolean isConditionMet(Object actualValue, String operator, String expectedValue) {
+        if (actualValue == null) {
+            return false;
+        }
+
+        String strValue = actualValue.toString();
+
+        switch (operator.toLowerCase()) {
+            case "equals":
+                return strValue.equals(expectedValue);
+            case "not_equals":
+                return !strValue.equals(expectedValue);
+            case "contains":
+                return strValue.contains(expectedValue);
+            case "starts_with":
+                return strValue.startsWith(expectedValue);
+            case "ends_with":
+                return strValue.endsWith(expectedValue);
+            case "greater_than":
+                try {
+                    double numActual = Double.parseDouble(strValue);
+                    double numExpected = Double.parseDouble(expectedValue);
+                    return numActual > numExpected;
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+            case "less_than":
+                try {
+                    double numActual = Double.parseDouble(strValue);
+                    double numExpected = Double.parseDouble(expectedValue);
+                    return numActual < numExpected;
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+            default:
+                return false;
+        }
+    }
+
     public ConfigRequest.Stage getStage(ServiceRequestEntity serviceRequest) throws JsonProcessingException {
 
         CategoryServiceConfigEntity categoryServiceConfigEntity = productCategoryRepository.findByCategoryNameAndServiceNameAndVersion(
-                serviceRequest.getCategory(), serviceRequest.getService(), serviceRequest.getConfigVersion())
+                        serviceRequest.getCategory(), serviceRequest.getService(), serviceRequest.getConfigVersion())
                 .orElseThrow(() -> new RuntimeException("Product category not found with name: PE"));
 
-        List<ConfigRequest.Stage> stages = objectMapper.readValue(categoryServiceConfigEntity.getConfiguration(), new TypeReference<List<ConfigRequest.Stage>>() {});
+        List<ConfigRequest.Stage> stages = objectMapper.readValue(categoryServiceConfigEntity.getConfiguration(), new TypeReference<List<ConfigRequest.Stage>>() {
+        });
 
 
         for (ConfigRequest.Stage stage : stages) {
@@ -185,18 +287,6 @@ public class ServiceRequestService {
         }
 
         return null;
-    }
-
-    public String getNextStage(ConfigRequest.Stage currentStage){
-
-        if (currentStage.getActions()==null || currentStage.getActions().isEmpty()){
-            return null;
-        }
-
-        return currentStage.getActions().stream()
-                .filter(action -> action.getOption().equalsIgnoreCase("Submit"))
-                .map(action -> action.getStage())
-                .findFirst().orElse(null);
     }
 
     /**

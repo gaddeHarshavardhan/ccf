@@ -1,8 +1,5 @@
 package com.oneassist.ccf.contract;
 
-
-import lombok.Data;
-
 import java.util.List;
 
 public class ConfigRequest {
@@ -171,12 +168,43 @@ public class ConfigRequest {
         public void setStage(String stage) {
             this.stage = stage;
         }
+
+        public List<Condition> getConditions() {
+            return conditions;
+        }
+
+        public void setConditions(List<Condition> conditions) {
+            this.conditions = conditions;
+        }
     }
 
-    @Data
     public static class Condition{
         private String field;
         private String operator;
         private String value;
+
+        public String getField() {
+            return field;
+        }
+
+        public void setField(String field) {
+            this.field = field;
+        }
+
+        public String getOperator() {
+            return operator;
+        }
+
+        public void setOperator(String operator) {
+            this.operator = operator;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public void setValue(String value) {
+            this.value = value;
+        }
     }
 }
